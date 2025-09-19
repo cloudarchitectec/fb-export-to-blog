@@ -16,7 +16,7 @@ The tool processes Facebook's "Your information" export, specifically the posts 
 
 1. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 2. **Prepare your Facebook export:**
@@ -28,8 +28,7 @@ The tool processes Facebook's "Your information" export, specifically the posts 
 
 3. **Run the converter:**
    ```bash
-   cd processing
-   python3 scripts/create_fb_posts.py
+   python3 processing/scripts/create_fb_posts.py
    ```
 
 4. **View your blog:**
@@ -57,7 +56,6 @@ fb_posts/
         ├── create_fb_posts.py         # Main script (recommended)
         ├── analyze_file.py            # Analyze post content
         ├── count_unique.py            # Count post statistics  
-        ├── create_blog.py             # Legacy blog creator
         ├── debug_extract.py           # Debug extraction issues
         ├── extract_final.py           # Extract specific posts
         ├── extract_posts.py           # Basic post extraction
@@ -80,37 +78,16 @@ fb_posts/
 - Fixes image paths automatically
 - Includes original Facebook CSS for proper rendering
 
-**Usage:**
-```bash
-cd processing
-python3 scripts/create_fb_posts.py
-```
 
 ## Utility Scripts
 
-### analyze_file.py
-Analyzes post content and categorizes different types of posts.
-```bash
-python3 scripts/analyze_file.py
-```
+- `analyze_file.py`: Analyzes post content and categorizes different types of posts.
+- `count_unique.py`: Counts unique posts and provides statistics breakdown.
+- `debug_extract.py`: Debug tool to examine Facebook HTML structure and section classification.
+- `extract_final.py`: Extracts only status updates and photo posts to a filtered HTML file.
+- `extract_posts.py`: Basic post extraction utility for initial data processing.
+- `fix_image_paths.py`: Fixes image paths in existing HTML files to point to correct locations.
 
-### count_unique.py  
-Counts unique posts and provides statistics breakdown.
-```bash
-python3 scripts/count_unique.py
-```
-
-### extract_final.py
-Extracts only status updates and photo posts to a filtered HTML file.
-```bash
-python3 scripts/extract_final.py
-```
-
-### fix_image_paths.py
-Fixes image paths in existing HTML files to point to correct locations.
-```bash
-python3 scripts/fix_image_paths.py
-```
 
 ## Output Features
 

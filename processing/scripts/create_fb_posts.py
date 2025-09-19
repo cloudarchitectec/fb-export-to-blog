@@ -40,7 +40,7 @@ def parse_facebook_date(date_str):
             return "unknown-date", None
 
 def extract_first_sentence(text):
-    """Extract first sentence from text, limit to 50 chars"""
+    """Extract first sentence from text, limit to 40 chars"""
     if not text:
         return ""
     
@@ -56,47 +56,57 @@ def extract_first_sentence(text):
     sentences = re.split(r'[.!?]|\n', text)
     first_sentence = sentences[0].strip() if sentences else text
     
-    # Limit to 50 characters
-    if len(first_sentence) > 50:
-        return first_sentence[:47] + "..."
+    # Limit to 40 characters
+    if len(first_sentence) > 40:
+        return first_sentence[:37] + "..."
     
     return first_sentence
 
 def clean_title(title):
-    """Clean up title by removing unwanted prefixes"""
+    """Clean up title by removing unwanted prefixes and cleaning formatting"""
+    if not title:
+        return title
+    
+    # Remove "Mobile-uploads" or "Mobile uploads" from anywhere in the title
+    title = re.sub(r'Mobile[-\s]*uploads?', '', title, flags=re.IGNORECASE)
+    
     # Remove common Facebook post type prefixes
     prefixes_to_remove = [
         "Timeline-photos", "Timeline photos", 
-        "Mobile-uploads", "Mobile uploads",
         "Profile-pictures", "Profile pictures",
-        "Cover-photos", "Cover photos"
+        "Cover-photos", "Cover photos",
+        "Timeline", "Cover"
     ]
     
     for prefix in prefixes_to_remove:
-        if title.startswith(prefix):
+        if title.lower().startswith(prefix.lower()):
             title = title[len(prefix):].strip()
-            # Remove leading dash or space
-            if title.startswith('-') or title.startswith(' '):
+            # Remove leading dash, space, or other punctuation
+            while title and title[0] in '-_ ':
                 title = title[1:].strip()
             break
+    
+    # Clean up multiple Mobile-uploads patterns
+    title = re.sub(r'(Mobile[-\s]*uploads?\s*)+', '', title, flags=re.IGNORECASE)
+    
+    # Clean up any remaining leading/trailing dashes or spaces
+    title = re.sub(r'^[-\s_]+|[-\s_]+$', '', title)
+    
+    # Clean up multiple consecutive dashes or spaces
+    title = re.sub(r'[-\s_]{2,}', '-', title)
     
     return title
 
 def clean_facebook_content(section):
-    """Clean Facebook content by removing unwanted header text"""
-    # Work directly with the section instead of re-parsing
-    section_html = str(section)
+    """Clean up Facebook content by removing UI elements and labels"""
+    # Remove "Mobile uploads", "Timeline photos" labels from photo galleries
+    for div in section.find_all('div'):
+        div_text = div.get_text().strip()
+        if div_text in ['Mobile uploads', 'Timeline photos', 'Profile pictures', 'Cover photos']:
+            # Replace the text with empty string but keep the div structure
+            div.string = ''
     
-    # Remove unwanted header patterns using regex (faster than BeautifulSoup)
-    patterns_to_remove = [
-        r'<h2[^>]*>.*?Ellie Ellie (added|shared|updated|posted).*?</h2>',
-        r'<div[^>]*>\s*(Timeline photos|Mobile uploads|Profile pictures|Cover photos)\s*</div>'
-    ]
-    
-    for pattern in patterns_to_remove:
-        section_html = re.sub(pattern, '', section_html, flags=re.IGNORECASE | re.DOTALL)
-    
-    return section_html
+    return section
 
 def fix_image_paths(section):
     """Fix image and video paths to point to the correct location"""
@@ -203,7 +213,10 @@ def create_facebook_blog(input_file, output_file):
     photo_only_count = 0
     
     for section in sections:
-        # Fix image paths first
+        # Clean Facebook content first (remove UI labels)
+        section = clean_facebook_content(section)
+        
+        # Fix image paths
         section = fix_image_paths(section)
         
         # Extract date from footer
@@ -224,9 +237,10 @@ def create_facebook_blog(input_file, output_file):
         # Extract post content
         content_div = section.find('div', class_='_2pin')
         post_text = ""
+        meaningful_caption = ""
         
         if content_div:
-            # Look for text content
+            # Look for text content in the main content area
             text_divs = content_div.find_all('div', recursive=False)
             for div in text_divs:
                 text = div.get_text().strip()
@@ -234,11 +248,31 @@ def create_facebook_blog(input_file, output_file):
                     post_text = text
                     break
         
+        # If no main text content, look for meaningful photo captions
+        if not post_text:
+            # Look for captions in photo gallery areas (class _3-95 often contains captions)
+            caption_divs = section.find_all('div', class_='_3-95')
+            for div in caption_divs:
+                caption_text = div.get_text().strip()
+                # Filter out Facebook UI labels and unwanted text
+                if (caption_text and 
+                    len(caption_text) > 5 and  # Must be more than just a few characters
+                    'Mobile uploads' not in caption_text and  # Exclude Mobile uploads
+                    'Mobile-uploads' not in caption_text and  # Exclude Mobile-uploads
+                    caption_text not in ['Timeline photos', 'Profile pictures', 'Cover photos'] and
+                    not caption_text.startswith('Click for') and  # Skip video click prompts
+                    not caption_text.startswith('Updated ') and  # Skip update timestamps
+                    len(caption_text) < 100):  # Not too long to be main content
+                    meaningful_caption = caption_text
+                    break
+        
         # Determine title
         if post_text:
             title = extract_first_sentence(post_text)
+        elif meaningful_caption:
+            title = meaningful_caption
         else:
-            # This is a photo-only post
+            # This is a photo-only post with no meaningful captions
             photo_only_count += 1
             title = "photos"
         
@@ -492,8 +526,11 @@ def create_facebook_blog(input_file, output_file):
 
 if __name__ == "__main__":
     # Default file paths
-    input_file = "input/your_posts__check_ins__photos_and_videos_1.html"
-    output_file = "output/fb-posts.html"
+    input_file = "processing/input/your_posts__check_ins__photos_and_videos_1.html"
+    
+    # Generate timestamp for unique output filename
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_file = f"processing/output/fb-posts-{timestamp}.html"
     
     try:
         create_facebook_blog(input_file, output_file)

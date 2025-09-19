@@ -317,6 +317,7 @@ def create_facebook_blog(input_file, output_file):
             line-height: 1.6;
             background-color: #f5f5f5;
             color: #1c1e21;
+            font-size: 18px;
         }}
         
         .blog-header {{
@@ -329,14 +330,14 @@ def create_facebook_blog(input_file, output_file):
         }}
         
         .blog-header h1 {{
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin: 0 0 12px 0;
             color: #1c1e21;
             font-weight: 700;
         }}
         
         .blog-header p {{
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: #65676b;
             margin: 0;
         }}
@@ -361,7 +362,7 @@ def create_facebook_blog(input_file, output_file):
         }}
         
         .post-title {{
-            font-size: 1.3rem;
+            font-size: 1.6rem;
             font-weight: 600;
             margin: 0;
             line-height: 1.4;
@@ -381,7 +382,7 @@ def create_facebook_blog(input_file, output_file):
         }}
         
         .stats strong {{
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: #1c1e21;
         }}
         
@@ -396,6 +397,7 @@ def create_facebook_blog(input_file, output_file):
         @media (max-width: 768px) {{
             body {{
                 padding: 12px;
+                font-size: 16px;
             }}
             
             .blog-header {{
@@ -404,11 +406,11 @@ def create_facebook_blog(input_file, output_file):
             }}
             
             .blog-header h1 {{
-                font-size: 2rem;
+                font-size: 2.2rem;
             }}
             
             .blog-header p {{
-                font-size: 1rem;
+                font-size: 1.1rem;
             }}
             
             .post-header {{
@@ -416,7 +418,7 @@ def create_facebook_blog(input_file, output_file):
             }}
             
             .post-title {{
-                font-size: 1.1rem;
+                font-size: 1.3rem;
             }}
             
             .post-content {{
@@ -436,6 +438,7 @@ def create_facebook_blog(input_file, output_file):
         @media (max-width: 480px) {{
             body {{
                 padding: 8px;
+                font-size: 15px;
             }}
             
             .blog-header {{
@@ -443,7 +446,7 @@ def create_facebook_blog(input_file, output_file):
             }}
             
             .blog-header h1 {{
-                font-size: 1.75rem;
+                font-size: 1.9rem;
             }}
             
             .post-header {{
@@ -451,7 +454,7 @@ def create_facebook_blog(input_file, output_file):
             }}
             
             .post-title {{
-                font-size: 1rem;
+                font-size: 1.1rem;
             }}
             
             .post-content {{
@@ -473,6 +476,28 @@ def create_facebook_blog(input_file, output_file):
         .facebook-content ._a6-g {{
             background: transparent;
             border-radius: 0;
+        }}
+        
+        /* Increase font size for Facebook content text */
+        .facebook-content {{
+            font-size: 16px;
+            line-height: 1.5;
+        }}
+        
+        .facebook-content ._3-95 {{
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }}
+        
+        .facebook-content ._2pin {{
+            font-size: 16px;
+            line-height: 1.5;
+        }}
+        
+        .facebook-content ._a6-p {{
+            font-size: 16px;
+            line-height: 1.5;
         }}
         
         /* Include original Facebook styles */

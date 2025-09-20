@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
+
 """
-Facebook Export to Blog Converter
 
-This script processes a Facebook HTML export file and converts it into a clean,
-responsive blog-style HTML file containing only status updates and photo posts.
+This main script processes a Facebook HTML export file and converts it into a clean, responsive blog-style HTML file containing only status updates and photo posts.
 
-Input: input/your_posts__check_ins__photos_and_videos_1.html (Facebook export)
-Output: output/fb-posts.html (Clean blog format)
 
-Features:
-- Filters only status updates and photo posts
-- Removes Facebook clutter (Timeline-photos, Mobile-uploads, etc.)
-- Creates responsive design for mobile/tablet/desktop
-- Organizes posts chronologically (newest first)
-- Fixes image paths to work with local files
-- Generates clean YYYY-MM-DD-{title} format
+Note: All settings can be customized in config.py
 """
 
 import re
@@ -22,6 +13,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import html
 import os
+from config import *
+from helper import get_username_patterns, get_output_filename, validate_config
 
 def parse_facebook_date(date_str):
     """Convert Facebook date format to YYYY-MM-DD"""
@@ -67,18 +60,18 @@ def clean_title(title):
     if not title:
         return title
     
-    # Remove "Mobile-uploads" or "Mobile uploads" from anywhere in the title
-    title = re.sub(r'Mobile[-\s]*uploads?', '', title, flags=re.IGNORECASE)
+    # Remove Facebook clutter terms from title
+    for term in FACEBOOK_CLUTTER_TERMS:
+        # Remove both hyphenated and space versions
+        patterns = [
+            term,
+            term.replace(' ', '-'),
+            term.replace('-', ' ')
+        ]
+        for pattern in patterns:
+            title = re.sub(re.escape(pattern), '', title, flags=re.IGNORECASE)
     
-    # Remove common Facebook post type prefixes
-    prefixes_to_remove = [
-        "Timeline-photos", "Timeline photos", 
-        "Profile-pictures", "Profile pictures",
-        "Cover-photos", "Cover photos",
-        "Timeline", "Cover"
-    ]
-    
-    for prefix in prefixes_to_remove:
+    for prefix in []:
         if title.lower().startswith(prefix.lower()):
             title = title[len(prefix):].strip()
             # Remove leading dash, space, or other punctuation
@@ -99,10 +92,10 @@ def clean_title(title):
 
 def clean_facebook_content(section):
     """Clean up Facebook content by removing UI elements and labels"""
-    # Remove "Mobile uploads", "Timeline photos" labels from photo galleries
+    # Remove Facebook clutter labels from photo galleries
     for div in section.find_all('div'):
         div_text = div.get_text().strip()
-        if div_text in ['Mobile uploads', 'Timeline photos', 'Profile pictures', 'Cover photos']:
+        if div_text in FACEBOOK_CLUTTER_TERMS:
             # Replace the text with empty string but keep the div structure
             div.string = ''
     
@@ -110,6 +103,9 @@ def clean_facebook_content(section):
 
 def fix_image_paths(section):
     """Fix image and video paths to point to the correct location"""
+    if not FIX_MEDIA_PATHS:
+        return section
+        
     # Fix img src attributes
     for img in section.find_all('img'):
         src = img.get('src', '')
@@ -118,9 +114,9 @@ def fix_image_paths(section):
             if 'your_facebook_activity/posts/media' in src:
                 # Extract the path after "media/"
                 media_path = src.split('your_facebook_activity/posts/media/')[-1]
-                img['src'] = f"../input/media/{media_path}"
-            elif not src.startswith('../input/media/'):
-                img['src'] = f"../input/media/{src.split('/')[-1]}" if '/' in src else f"../input/media/{src}"
+                img['src'] = f"{RELATIVE_MEDIA_PATH}/{media_path}"
+            elif not src.startswith(f'{RELATIVE_MEDIA_PATH}/'):
+                img['src'] = f"{RELATIVE_MEDIA_PATH}/{src.split('/')[-1]}" if '/' in src else f"{RELATIVE_MEDIA_PATH}/{src}"
     
     # Fix video src attributes
     for video in section.find_all('video'):
@@ -130,9 +126,9 @@ def fix_image_paths(section):
             if 'your_facebook_activity/posts/media' in src:
                 # Extract the path after "media/"
                 media_path = src.split('your_facebook_activity/posts/media/')[-1]
-                video['src'] = f"../input/media/{media_path}"
-            elif not src.startswith('../input/media/'):
-                video['src'] = f"../input/media/{src.split('/')[-1]}" if '/' in src else f"../input/media/{src}"
+                video['src'] = f"{RELATIVE_MEDIA_PATH}/{media_path}"
+            elif not src.startswith(f'{RELATIVE_MEDIA_PATH}/'):
+                video['src'] = f"{RELATIVE_MEDIA_PATH}/{src.split('/')[-1]}" if '/' in src else f"{RELATIVE_MEDIA_PATH}/{src}"
     
     # Fix href attributes in links
     for link in section.find_all('a'):
@@ -142,9 +138,9 @@ def fix_image_paths(section):
             if 'your_facebook_activity/posts/media' in href:
                 # Extract the path after "media/"
                 media_path = href.split('your_facebook_activity/posts/media/')[-1]
-                link['href'] = f"../input/media/{media_path}"
-            elif not href.startswith('../input/media/'):
-                link['href'] = f"../input/media/{href.split('/')[-1]}" if '/' in href else f"../input/media/{href}"
+                link['href'] = f"{RELATIVE_MEDIA_PATH}/{media_path}"
+            elif not href.startswith(f'{RELATIVE_MEDIA_PATH}/'):
+                link['href'] = f"{RELATIVE_MEDIA_PATH}/{href.split('/')[-1]}" if '/' in href else f"{RELATIVE_MEDIA_PATH}/{href}"
     
     return section
 
@@ -174,6 +170,9 @@ def filter_facebook_posts(input_file):
     photo_count = 0
     video_count = 0
     
+    # Get username patterns from config
+    username_patterns = get_username_patterns()
+    
     for section in all_sections:
         # Get all header texts to determine post type
         headers = section.find_all('h2', class_=['_2ph_', '_a6-h', '_a6-i'])
@@ -181,20 +180,43 @@ def filter_facebook_posts(input_file):
             # Combine all header texts
             all_header_text = ' '.join([h.get_text() for h in headers]).lower()
             
-            # Very specific matching to avoid false positives
-            if 'ellie ellie updated her status' in all_header_text:
-                target_sections.append(section)
-                status_count += 1
-            elif ('ellie ellie added a new photo' in all_header_text or 
-                  ('ellie ellie added' in all_header_text and 'photo' in all_header_text)):
-                target_sections.append(section)
-                if 'video' in all_header_text:
-                    video_count += 1
-                else:
-                    photo_count += 1
-            elif ('ellie ellie added' in all_header_text and 'video' in all_header_text):
-                target_sections.append(section)
-                video_count += 1
+            # Check if this section should be included based on config
+            section_included = False
+            
+            # Check for status updates
+            if INCLUDE_STATUS_UPDATES:
+                for pattern in username_patterns['status_update']:
+                    if pattern in all_header_text:
+                        target_sections.append(section)
+                        status_count += 1
+                        section_included = True
+                        break
+            
+            # Check for photo posts (if not already included)
+            if not section_included and INCLUDE_PHOTOS:
+                for pattern in username_patterns['photo_post']:
+                    if pattern in all_header_text and 'video' not in all_header_text:
+                        target_sections.append(section)
+                        photo_count += 1
+                        section_included = True
+                        break
+            
+            # Check for video posts (if not already included) 
+            if not section_included and INCLUDE_VIDEOS:
+                for pattern in username_patterns['video_post']:
+                    if pattern in all_header_text:
+                        target_sections.append(section)
+                        video_count += 1
+                        section_included = True
+                        break
+                # Also check for photo posts that mention video
+                if not section_included:
+                    for pattern in username_patterns['photo_post']:
+                        if pattern in all_header_text and 'video' in all_header_text:
+                            target_sections.append(section)
+                            video_count += 1
+                            section_included = True
+                            break
     
     print(f"Filtered {len(target_sections)} posts from {len(all_sections)} total sections")
     print(f"  - Status updates: {status_count}")
@@ -257,14 +279,16 @@ def create_facebook_blog(input_file, output_file):
                 # Filter out Facebook UI labels and unwanted text
                 if (caption_text and 
                     len(caption_text) > 5 and  # Must be more than just a few characters
-                    'Mobile uploads' not in caption_text and  # Exclude Mobile uploads
-                    'Mobile-uploads' not in caption_text and  # Exclude Mobile-uploads
-                    caption_text not in ['Timeline photos', 'Profile pictures', 'Cover photos'] and
+                    not any(term in caption_text for term in FACEBOOK_CLUTTER_TERMS) and
                     not caption_text.startswith('Click for') and  # Skip video click prompts
                     not caption_text.startswith('Updated ') and  # Skip update timestamps
                     len(caption_text) < 100):  # Not too long to be main content
                     meaningful_caption = caption_text
                     break
+        
+        # Skip empty posts if configured
+        if SKIP_EMPTY_POSTS and not post_text and not meaningful_caption:
+            continue
         
         # Determine title
         if post_text:
@@ -278,6 +302,10 @@ def create_facebook_blog(input_file, output_file):
         
         # Clean up title
         title = clean_title(title)
+        
+        # Limit title length if configured
+        if len(title) > MAX_TITLE_LENGTH:
+            title = title[:MAX_TITLE_LENGTH].rsplit(' ', 1)[0] + '...'
         
         # Clean up title for filename safety
         safe_title = re.sub(r'[^\w\s-]', '', title).strip()
@@ -294,8 +322,8 @@ def create_facebook_blog(input_file, output_file):
             'html': clean_facebook_content(section)
         })
     
-    # Sort by date (newest first)
-    posts.sort(key=lambda x: x['datetime'], reverse=True)
+    # Sort by date based on config
+    posts.sort(key=lambda x: x['datetime'], reverse=REVERSE_CHRONOLOGICAL)
     
     # Generate blog HTML
     blog_html = f"""<!DOCTYPE html>
@@ -303,7 +331,7 @@ def create_facebook_blog(input_file, output_file):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ellie's Facebook Posts - Blog Format</title>
+    <title>{BLOG_TITLE}</title>
     <style>
         * {{
             box-sizing: border-box;
@@ -506,8 +534,8 @@ def create_facebook_blog(input_file, output_file):
 </head>
 <body>
     <div class="blog-header">
-        <h1>Ellie's Facebook Posts</h1>
-        <p>Organized blog-style from Facebook export • {len(posts)} posts total</p>
+        <h1>{BLOG_TITLE}</h1>
+        <h3>{BLOG_DESCRIPTION}</h3>
     </div>
     
     <div class="stats">
@@ -550,18 +578,26 @@ def create_facebook_blog(input_file, output_file):
     return len(posts)
 
 if __name__ == "__main__":
-    # Default file paths
-    input_file = "processing/input/your_posts__check_ins__photos_and_videos_1.html"
+    # Show configuration warnings if any
+    warnings = validate_config()
+    if warnings:
+        print("Configuration Warnings:")
+        for warning in warnings:
+            print(f"  {warning}")
+        print()
     
-    # Generate timestamp for unique output filename
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    output_file = f"processing/output/fb-posts-{timestamp}.html"
+    # Use configuration file paths
+    input_file = INPUT_FILE
+    output_file = get_output_filename()
+    print(f"📄 Input: {input_file}")
+    print(f"📄 Output: {output_file}")
+    # Ensure output directory exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     try:
         create_facebook_blog(input_file, output_file)
         print("\n✅ Blog creation completed successfully!")
-        print(f"📁 Input: {input_file}")
-        print(f"📄 Output: {output_file}")
+
     except FileNotFoundError as e:
         print(f"❌ Error: {e}")
         print(f"Please ensure {input_file} exists in the current directory.")

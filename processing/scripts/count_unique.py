@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from bs4 import BeautifulSoup
+from config import *
 
 def count_unique_sections(html_file):
     """Count unique sections with specific headers"""

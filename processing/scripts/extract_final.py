@@ -2,6 +2,8 @@
 
 import re
 from bs4 import BeautifulSoup
+from config import *
+from helper import get_username_patterns
 
 def extract_sections(html_file, output_file):
     """Extract specific sections from Facebook HTML export"""
@@ -19,6 +21,9 @@ def extract_sections(html_file, output_file):
     status_count = 0
     photo_count = 0
     
+    # Get username patterns from config
+    username_patterns = get_username_patterns()
+    
     for section in all_sections:
         # Get all header texts to determine post type
         headers = section.find_all('h2', class_=['_2ph_', '_a6-h', '_a6-i'])
@@ -26,14 +31,19 @@ def extract_sections(html_file, output_file):
             # Combine all header texts
             all_header_text = ' '.join([h.get_text() for h in headers]).lower()
             
-            # Very specific matching to avoid false positives
-            if 'ellie ellie updated her status' in all_header_text:
-                target_sections.append(section)
-                status_count += 1
-            elif ('ellie ellie added a new photo' in all_header_text or 
-                  ('ellie ellie added' in all_header_text and 'photo' in all_header_text and 'video' not in all_header_text)):
-                target_sections.append(section)
-                photo_count += 1
+            # Check for status updates
+            for pattern in username_patterns['status_update']:
+                if pattern in all_header_text:
+                    target_sections.append(section)
+                    status_count += 1
+                    break
+            else:
+                # Check for photo posts (only if not already matched as status)
+                for pattern in username_patterns['photo_post']:
+                    if pattern in all_header_text and 'video' not in all_header_text:
+                        target_sections.append(section)
+                        photo_count += 1
+                        break
     
     # Create the output HTML
     html_structure = f"""<!DOCTYPE html>
@@ -78,4 +88,5 @@ def extract_css(content):
     return ""
 
 if __name__ == "__main__":
-    extract_sections('first_cut.html', 'second_cut.html')
+    # Use config file for input path
+    extract_sections(INPUT_FILE, 'second_cut.html')

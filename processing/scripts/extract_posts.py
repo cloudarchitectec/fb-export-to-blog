@@ -2,6 +2,7 @@
 
 import re
 from bs4 import BeautifulSoup
+from config import *
 
 def extract_sections(html_file, output_file):
     """Extract specific sections from Facebook HTML export"""

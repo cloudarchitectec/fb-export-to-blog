@@ -6,7 +6,7 @@ Convert Facebook HTML export into a clean, responsive blog-style website. Filter
 
 ##### Example Output
 
-![Example Blog Output](processing/output/example.png)
+![Example Blog Output](docs/example.png)
 
 ## Features
 

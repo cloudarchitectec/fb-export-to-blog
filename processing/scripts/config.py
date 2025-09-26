@@ -1,46 +1,76 @@
 """
-This file contains all configurable parameters for the Facebook post conversion scripts.
-Modify these values to customisze the behavior for your specific Facebook export data.
+Edit the settings below to control how your Facebook posts are turned into a blog.
+Just change the values in quotes ("...") or True/False as needed.
 """
 
 # ============================================================================
-# USER CONFIGURATION
+# BASIC SETTINGS - CHANGE THESE!
 # ============================================================================
 
-# Your Facebook display name (case-insensitive matching)
-# This is used to identify your posts vs. other people's posts/interactions
+# Your Facebook display name (how your name appears on Facebook)
+# This helps the tool find your posts (not your friends')
 FACEBOOK_USERNAME = "Ellie Ellie"
+
+# The title and description for your blog page
 BLOG_TITLE = "The Ellie Edition"
 BLOG_DESCRIPTION = "A curated archive of everyday thoughts and snapshots beyond Facebook."
 
-# Input files from Facebook export
+# ============================================================================
+# FILE LOCATIONS - USUALLY DON'T NEED TO CHANGE
+# ============================================================================
 
-INPUT_FILE = "processing/input/your_posts__check_ins__photos_and_videos_1.html" # The main posts HTML file from your Facebook data download
-MEDIA_DIR = "processing/input/media" # Media directory path (where Facebook photos/videos are stored)
+# The main Facebook HTML file you downloaded (should be in processing/input/)
+INPUT_FILE = "processing/input/your_posts__check_ins__photos_and_videos_1.html"
 
-# Output directory and file settings
+# The folder with your Facebook photos and videos (should be in processing/input/media)
+MEDIA_DIR = "processing/input/media"
+
+# Where to save your blog (the output folder)
 OUTPUT_DIR = "processing/output"
-INCLUDE_TIMESTAMP = True    # Whether to add timestamp to output filename
-OUTPUT_PREFIX = "fb-posts"  # Output will be: fb-posts-YYYYMMDD-HHMMSS.html
 
-# Processing options
-SKIP_EMPTY_POSTS = True         # Skip posts with no meaningful content
-REVERSE_CHRONOLOGICAL = True    # Show newest posts first (True) or oldest first (False)
-INCLUDE_PHOTOS = True           # Include photo posts in output
-INCLUDE_VIDEOS = True           # Include video posts in output
-INCLUDE_STATUS_UPDATES = False  # Include text-only status updates
-MAX_TITLE_LENGTH = 40           # Maximum title length for generated post titles
+# Add date and time to the blog filename? (True = yes, False = no)
+INCLUDE_TIMESTAMP = True
 
-# Image and video processing
-FIX_MEDIA_PATHS = True         # Automatically fix broken image/video paths
-RELATIVE_MEDIA_PATH = "../input/media"  # Relative path from output to media directory
+# The start of the blog filename (don't change unless you want)
+OUTPUT_PREFIX = "fb-posts"  # Example: fb-posts-YYYYMMDD-HHMMSS.html
 
 # ============================================================================
-# CONTENT FILTERING CONFIGURATION
+# WHAT TO INCLUDE? (True = yes, False = no)
 # ============================================================================
 
-# Facebook clutter terms to remove from post titles and content
-# These are common Facebook-generated labels that add no meaningful content
+# Skip posts that are empty or have no real content
+SKIP_EMPTY_POSTS = True
+
+# Show newest posts first? (True = newest first, False = oldest first)
+REVERSE_CHRONOLOGICAL = True
+
+# Include photo posts?
+INCLUDE_PHOTOS = True
+
+# Include video posts?
+INCLUDE_VIDEOS = True
+
+# Include text-only status updates?
+INCLUDE_STATUS_UPDATES = False
+
+# Shorten long blog post titles (number of letters)
+MAX_TITLE_LENGTH = 40
+
+# ============================================================================
+# IMAGE AND VIDEO SETTINGS
+# ============================================================================
+
+# Try to fix broken image/video links automatically?
+FIX_MEDIA_PATHS = True
+
+# Where the blog should look for your photos (usually don't change)
+RELATIVE_MEDIA_PATH = "../input/media"
+
+# ============================================================================
+# ADVANCED: FILTERING FACEBOOK CLUTTER (EXTRA)
+# ============================================================================
+
+# Words Facebook adds to your posts that you probably don't want in your blog titles
 FACEBOOK_CLUTTER_TERMS = [
     "Timeline photos", "Timeline-photos",
     "Profile pictures", "Profile-pictures", 
@@ -49,8 +79,7 @@ FACEBOOK_CLUTTER_TERMS = [
     "Timeline", "Cover"
 ]
 
-# Post type identification patterns
-# These patterns help categorize different types of Facebook posts
+# How the tool recognizes different types of posts (don't change unless you know what you're doing)
 POST_TYPE_PATTERNS = {
     "status_update": [
         "{username} updated her status",

@@ -2,69 +2,111 @@
 
 *[This is a vibe coding project with limited verification - use at your own risk.🤖]*
 
-Convert Facebook HTML export into a clean, responsive blog-style website. Filters meaningful posts (status updates and photos) and presents them chronologically with modern design.
+Convert Facebook HTML export into a clean, easy-to-read blog website. This tool keeps your important posts (status updates and photos) and organises them by date, with a modern look.
 
 ##### Example Output
 
 ![Example Blog Output](docs/example.png)
 
-## Features
+## What does this do?
 
-- Filters only status updates and photo posts (excludes likes, shares, etc.)
+- Keeps only posts and photos (ignores likes, shares, etc.)
 - Removes Facebook clutter ("Timeline photos", "Mobile uploads", etc.)
-- Configurable username filtering
-- Creates responsive design (mobile/tablet/desktop)
-- Organizes posts chronologically (newest first)
-- Generates clean YYYY-MM-DD-{title} format
-- Fixes image paths automatically
-- Generates clean, SEO-friendly titles
-- Includes original Facebook CSS for proper rendering
+- Lets you set your name so only your posts are included
+- Makes your blog look good on phones, tablets, and computers
+- Shows your posts from newest to oldest
+- Fixes image links automatically
+- Makes blog titles that are easy to read and search
+- Keeps Facebook's original style for familiar look
 
-## Quick Start
+---
 
-### Prerequisites
-- Code editor (VS Code recommended)
-- Python 3 and pip installed
+## Quick Start Guide
 
-### Setup
+### What you need
 
-1. **Download Facebook data:**
-   - Go to Facebook → Settings → Your Facebook Information → Download Your Information
-   - Select "Posts" and download HTML format
-   - Extract the files
+- A computer (Windows, Mac, or Linux)
+- [Python 3](https://www.python.org/downloads/) (free, easy to install)
+- A code editor like [VS Code](https://code.visualstudio.com/)(free, easy to install)
 
-2. **Prepare files:**
-   - Copy `your_posts__check_ins__photos_and_videos_1.html` to the `processing/input/` directory
-   - Copy the `media/` folder from the export to `processing/input/media/`
-   
-3. **Configure for your username:**
-   - Open `processing/scripts/config.py`
-   - (REQUIRED) Update **`FACEBOOK_USERNAME`** with your actual Facebook display name. 
-   - Optional settings:
-      - **`INPUT_FILE`** - Path to your Facebook posts HTML file
-      - **`OUTPUT_DIR`** - Where to save the generated blog
-      - **`BLOG_TITLE`** - Title for your blog page
-      - **`INCLUDE_PHOTOS`** - Include photo posts (True/False)
-      - **`INCLUDE_VIDEOS`** - Include video posts (True/False)  
-      - **`INCLUDE_STATUS_UPDATES`** - Include text status updates (True/False)
-      - **`SKIP_EMPTY_POSTS`** - Skip posts with no meaningful content (True/False)
-      - **`REVERSE_CHRONOLOGICAL`** - Show newest posts first (True/False)
-      - **`INCLUDE_TIMESTAMP`** - Add timestamp to output filename (True/False)
-      - **`FACEBOOK_CLUTTER_TERMS`** - List of Facebook labels to remove
+---
 
-4. **Install and run:**
-   ```bash
+### Step 1: Download your Facebook data
+
+1. Go to Facebook → **Settings** → **Your Facebook Information** → **Download Your Information**
+2. Select **"Posts"** only, and choose **HTML format**
+3. Click **Create File** and wait for Facebook to finish
+4. Download and unzip (extract) the file to your computer
+
+---
+
+### Step 2: Prepare your files
+
+1. Find the file named something like `your_posts__check_ins__photos_and_videos_1.html` in your Facebook download
+2. Copy this file into the folder: `processing/input/`
+3. Copy the entire `media/` folder (with your photos) into `processing/input/media/`
+
+*Tip: If you can't find these folders, create them inside the project folder.*
+
+---
+
+### Step 3: Tell the tool your Facebook name
+
+1. In VS Code, open the file: `processing/scripts/config.py`
+2. Find the line that says `FACEBOOK_USERNAME = ""`
+3. Type your Facebook display name between the quotes, for example:
+   ```
+   FACEBOOK_USERNAME = "Jane Smith"
+   ```
+4. (Optional) You can change other settings in this file.
+
+---
+
+### Step 4: Run the converter
+
+1. Open a **Terminal** (Mac/Linux) or **Command Prompt** (Windows)
+2. Go to your project folder. For example:
+   ```
+   cd path/to/fb-export-to-blog
+   ```
+3. Install the needed tools (only once):
+   ```
    pip3 install -r requirements.txt
+   ```
+4. Run the converter:
+   ```
    python3 processing/scripts/create_fb_posts.py
    ```
 
-5. **View results:**
-   - Open `processing/output/fb-posts-YYYYMMDD-HHMMSS.html` in your browser
+---
+
+### Step 5: See your blog!
+
+- Open the file in `processing/output/` that looks like `fb-posts-YYYYMMDD-HHMMSS.html`
+- Double-click to open it in your web browser
+
+---
+
+## Troubleshooting
+
+- **Python not found?**  
+  Download and install Python 3 from [python.org](https://www.python.org/downloads/). Restart your computer if needed.
+
+- **pip3 not found?**  
+  Try `pip` instead of `pip3`. Or install pip by following [these instructions](https://pip.pypa.io/en/stable/installation/).
+
+- **Can't find folders?**  
+  Make sure you are in the correct project folder. Create missing folders if needed.
+
+- **No posts appear?**  
+  Double-check your `FACEBOOK_USERNAME` in `config.py` matches your Facebook display name exactly.
+
+---
 
 ## File Structure
 
 ```
-fb_posts/
+fb-export-to-blog/
 ├── requirements.txt           # Python dependencies
 ├── README.md                 # This file
 ├── original/                 # Facebook export archive
@@ -86,16 +128,17 @@ fb_posts/
 │       └── fix_image_paths.py    # Fix image links
 ```
 
-## Scripts Overview
-- `config.py` - Settings and customization
-- `create_fb_posts.py` - Complete Facebook-to-blog converter (main script)
-- `analyze_file.py` - Categorize and analyze post types
-- `count_unique.py` - Generate post statistics
-- `debug_extract.py` - Debug HTML structure issues
-- `extract_final.py` - Filter meaningful posts only
+---
+
+## What are the scripts for?
+- `config.py` - Change settings (your name, options)
+- `create_fb_posts.py` - The main tool (run this!)
+- `analyze_file.py` - See what types of posts you have
+- `count_unique.py` - Count your post types
+- `debug_extract.py` - For fixing problems
+- `extract_final.py` - Filters only the good posts
 - `extract_posts.py` - Basic post extraction
-- `fix_image_paths.py` - Repair broken image links
+- `fix_image_paths.py` - Fixes broken image links
 
-## Results
+---
 
-The tool filters ~40% of Facebook content, keeping only meaningful posts while preserving all your actual content and media.
